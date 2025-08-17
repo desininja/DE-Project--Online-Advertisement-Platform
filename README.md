@@ -728,3 +728,8 @@ You can use the Postman platform as well to learn more in-depth about the Flask 
  
 
 You can find the code used in the video in the following document:
+
+
+
+
+https://www.linkedin.com/pulse/architecture-generic-online-real-time-advertising-platform-ali-dasdan/
