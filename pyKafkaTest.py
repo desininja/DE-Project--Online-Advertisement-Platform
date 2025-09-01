@@ -1,13 +1,19 @@
 from pykafka import KafkaClient
 import json
 import psycopg2
+import os
+from dotenv import load_dotenv
 
 
-DB_NAME = 'postgres'
-DB_USER = 'himanshu'
-DB_PASS = 'postgres'
-DB_HOST = 'localhost'
-DB_PORT = '5432'
+load_dotenv()
+
+
+DB_NAME = os.getenv('DB_NAME')
+DB_USER = os.getenv('DB_USER')
+DB_PASS = os.getenv('DB_PASS')
+DB_HOST = os.getenv('DB_HOST')
+DB_PORT = os.getenv('DB_PORT')
+
 
 
 try:
@@ -31,31 +37,34 @@ for message in consumer:
         print(message_value)
         print("-"*20)
         data = json.loads(message_value)
-        if data['action']=='Stop Campaign':
-            data_to_insert = (data['text'],data['category'],data['keywords'],data['campaign_id'],'INACTIVE',
-                              data['target_gender'],data['target_age_range']['start'],data['target_age_range']['end'],
-                              data['target_city'],data['target_state'],data['target_country'],
-                              data['target_income_bucket'],data['target_device'],data['cpc'],data['cpa'],
-                              data['budget'],data['budget'],data['date_range']['start'],
-                              data['date_range']['end'],data['time_range']['start'],data['time_range']['end'])
-        else:
-            data_to_insert = (data['text'],data['category'],data['keywords'],data['campaign_id'],'ACTIVE',
-                              data['target_gender'],data['target_age_range']['start'],data['target_age_range']['end'],
-                              data['target_city'],data['target_state'],data['target_country'],
-                              data['target_income_bucket'],data['target_device'],data['cpc'],data['cpa'],
-                              data['budget'],data['budget'],data['date_range']['start'],
-                              data['date_range']['end'],data['time_range']['start'],data['time_range']['end'])     
-        print(data_to_insert)
 
-        sql_query = """
-        INSERT INTO online_ads.ads (text,category,keywords,campaign_id,status,target_gender,target_age_start,
-        target_age_end,target_city,target_state,target_country,target_income_bucket,target_device,cpc,cpa,
-        budget,current_slot_budget,date_range_start,date_range_end,time_range_start,time_range_end)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        """
-        cursor.execute(sql_query,data_to_insert)
-        conn.commit()
-        print("Data inserted Successfully!")
+        print(data)
+        print(data['action'])
+        # if data['action']=='Stop Campaign':
+        #     data_to_insert = (data['text'],data['category'],data['keywords'],data['campaign_id'],'INACTIVE',
+        #                       data['target_gender'],data['target_age_range']['start'],data['target_age_range']['end'],
+        #                       data['target_city'],data['target_state'],data['target_country'],
+        #                       data['target_income_bucket'],data['target_device'],data['cpc'],data['cpa'],
+        #                       data['budget'],data['budget'],data['date_range']['start'],
+        #                       data['date_range']['end'],data['time_range']['start'],data['time_range']['end'])
+        # else:
+        #     data_to_insert = (data['text'],data['category'],data['keywords'],data['campaign_id'],'ACTIVE',
+        #                       data['target_gender'],data['target_age_range']['start'],data['target_age_range']['end'],
+        #                       data['target_city'],data['target_state'],data['target_country'],
+        #                       data['target_income_bucket'],data['target_device'],data['cpc'],data['cpa'],
+        #                       data['budget'],data['budget'],data['date_range']['start'],
+        #                       data['date_range']['end'],data['time_range']['start'],data['time_range']['end'])     
+        # print(data_to_insert)
+
+        # sql_query = """
+        # INSERT INTO online_ads.ads (text,category,keywords,campaign_id,status,target_gender,target_age_start,
+        # target_age_end,target_city,target_state,target_country,target_income_bucket,target_device,cpc,cpa,
+        # budget,current_slot_budget,date_range_start,date_range_end,time_range_start,time_range_end)
+        # VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        # """
+        # cursor.execute(sql_query,data_to_insert)
+        # conn.commit()
+        # print("Data inserted Successfully!")
 
 
 
