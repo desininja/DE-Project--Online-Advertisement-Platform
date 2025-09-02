@@ -1,4 +1,4 @@
-from pykafka import KafkaClient
+from pykafka import KafkaClient, common
 import json
 import psycopg2
 import os
@@ -29,7 +29,12 @@ except (Exception,psycopg2.DatabaseError) as error:
 client = KafkaClient(hosts="18.211.252.152:9092")
 topic = client.topics['de-capstone1']
 
-consumer =  topic.get_simple_consumer()
+consumer =  topic.get_simple_consumer(
+    consumer_group=b'ad-manager',
+    auto_commit_enable=True,
+    reset_offset_on_start=True,
+    auto_offset_reset=common.OffsetType.LATEST
+)
 
 for message in consumer:
     if message is not None:
