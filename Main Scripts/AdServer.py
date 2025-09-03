@@ -6,6 +6,23 @@ import asyncpg
 import uuid
 from datetime import datetime
 from pydantic import BaseModel
+from confluent_kafka import Producer
+import json
+
+KAFKA_BROKER = "localhost:9092"
+KAFKA_TOPIC = "test-for-online-ads"
+
+# --- Producer Configuration ---
+conf = {'bootstrap.servers': KAFKA_BROKER}
+producer = Producer(conf)
+
+def delivery_report(err, msg):
+    """Called once for each message produced to indicate delivery result."""
+    if err is not None:
+        print(f"Message delivery failed: {err}")
+    else:
+        print(f"Message delivered to topic '{msg.topic().encode('utf-8')}'"
+              f" [{msg.partition()}] at offset {msg.offset()}")
 
 load_dotenv()
 
@@ -48,11 +65,27 @@ async def update_budget_async(campaign_id, expenditure_amount):
     """
     Asynchronously updates the budget for a given campaign.
     """
-    update_query = """
-        UPDATE online_ads.ads
-        SET current_slot_budget = current_slot_budget - $1,budget = budget - $1
+    check_query = """
+        SELECT CASE WHEN current_slot_budget - $1 <= 0 OR budget - $1 <= 0 THEN True ELSE False END
+        FROM online_ads.ads
         WHERE campaign_id = $2;
-    """
+        """
+    
+    async with db_pool.acquire() as conn:
+        result = await conn.fetchval(check_query, expenditure_amount, campaign_id)
+    print("Check query result:", result)
+    if result:
+        update_query = """
+            UPDATE online_ads.ads
+            SET status = 'Inactive', current_slot_budget = current_slot_budget - $1,budget = budget - $1
+            WHERE campaign_id = $2;
+            """
+    else:
+        update_query = """
+            UPDATE online_ads.ads
+            SET current_slot_budget = current_slot_budget - $1,budget = budget - $1
+            WHERE campaign_id = $2;
+            """
     async with db_pool.acquire() as conn:
         await conn.execute(update_query, expenditure_amount, campaign_id)
 
@@ -78,7 +111,21 @@ async def get_available_ads_async(device_type, city, state):
 
 async def get_served_ad_async(request_id):
     query = """
-            SELECT * FROM online_ads.served_ads
+            SELECT 
+                    campaign_id,
+                    user_id,
+                    request_id,
+                    auction_cpm,
+                    auction_cpa,
+                    auction_cpc,
+                    target_age_range,
+                    target_location,
+                    target_gender,
+                    target_income_bucket,
+                    target_device_type,
+                    campaign_start_time,
+                    campaign_end_time 
+            FROM online_ads.served_ads
             WHERE request_id = $1;
             """
     
@@ -174,7 +221,15 @@ async def serve_ads(user_id:str, device_type: str, city: str, state:str):
 
 @app.post("/ad/{ad_request_id}/feedback")
 async def ad_feedback(ad_request_id: str,action: Action):
+    
+    user_feedback_time = datetime.now().replace(microsecond=0)
+    click = action.Click
+    view = action.View
+    acquisition = action.Acquisition
+
     served_ad = await get_served_ad_async(ad_request_id)
+    
+    
     if not served_ad:
         raise HTTPException(status_code=404, detail="Ad not found.")
     
@@ -187,7 +242,23 @@ async def ad_feedback(ad_request_id: str,action: Action):
     elif action.View ==1:
         served_ad['expenditure_amount'] = 0
         served_ad['user_action'] = 'view'
-    message = await update_budget_async(served_ad['campaign_id'], served_ad['expenditure_amount'])
-    
+    await update_budget_async(served_ad['campaign_id'], served_ad['expenditure_amount'])
+    served_ad['timestamp'] = user_feedback_time.isoformat()
+
+    served_ad['click'] = click
+    served_ad['view'] = view
+    served_ad['acquisition'] = acquisition
+    served_ad['campaign_start_time'] = served_ad['campaign_start_time'].isoformat()
+    served_ad['campaign_end_time'] = served_ad['campaign_end_time'].isoformat()
     print(served_ad)
+    print(type(served_ad))
+    
+    message_json = json.dumps(served_ad)
+    producer.produce(
+            KAFKA_TOPIC,
+            message_json.encode('utf-8'),
+            callback=delivery_report
+        )
+    producer.flush()
+    
     return {"status": "Success"}
