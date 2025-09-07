@@ -26,14 +26,17 @@ try:
 except (Exception,psycopg2.DatabaseError) as error:
     print(error)
 
+kafka_host = os.getenv("KAFKA_ADS_SOURCE_HOST")
+kafka_topic = os.getenv("KAFKA_ADS_SOURCE_TOPIC")
+
 client = KafkaClient(hosts="18.211.252.152:9092")
-topic = client.topics['de-capstone1']
+topic = client.topics["de-capstone1"]
 
 consumer =  topic.get_simple_consumer(
     consumer_group=b'ad-manager',
     auto_commit_enable=True,
     reset_offset_on_start=True,
-    auto_offset_reset=common.OffsetType.LATEST
+    auto_offset_reset=common.OffsetType.EARLIEST
 )
 
 for message in consumer:
@@ -104,12 +107,3 @@ for message in consumer:
 
 
 conn.close()
-# {"text": "LICTOP 0.4mm Drill Bits Stainless Steel for 3D Printer Nozzle Cleaning Pack of 10",
-#   "category": "Tools & Hardware", "keywords": "industrial,scientific,manuf,products", 
-#   "campaign_id": "d8ae103c-7a42-11f0-b7f6-0e087721c0e9", 
-#   "action": "New Campaign", 
-#   "target_gender": "All", 
-#   "target_age_range": {"start": "25", "end": "35"}, 
-#   "target_city": "All", "target_state": "All", "target_country": "India", "target_income_bucket": "L", 
-#   "target_device": "Android Mobile", "cpc": "0.00041", "cpa": "0.0021", "budget": 900,
-#   "date_range": {"start": "2025-08-16", "end": "2025-08-17"}, "time_range": {"start": "1:00:00", "end": "20:00:00"}}

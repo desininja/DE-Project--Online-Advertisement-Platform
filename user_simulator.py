@@ -1,5 +1,5 @@
 import requests
-import mysql.connector
+import psycopg2
 from time import sleep
 import random
 import sys
@@ -21,20 +21,20 @@ class UserSimulator:
                  ad_server_port, feedback_handler_host, feedback_handler_port):
 
         # Initialize database connection
-        db = mysql.connector.connect(
+        conn = psycopg2.connect(
             host=database_host,
             user=database_username,
             password=database_password,
             database=database_name
         )
-        db_cursor = db.cursor()
+        db_cursor = conn.cursor()
 
         # Retrieve list of users from database
-        db_cursor.execute("SELECT id, device_type, age FROM users")
+        db_cursor.execute("SELECT id, device_type, age FROM online_ads.user")
         users = db_cursor.fetchall()
 
         # Close database connection
-        db.close()
+        conn.close()
 
         # Set the parameter for API calls
         self.protocol = protocol
