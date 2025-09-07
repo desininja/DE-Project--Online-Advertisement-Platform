@@ -10,8 +10,11 @@ from confluent_kafka import Producer
 import json
 from contextlib import asynccontextmanager
 
-KAFKA_BROKER = "localhost:9092"
-KAFKA_TOPIC = "test-for-online-ads"
+load_dotenv()
+
+KAFKA_BROKER = 'localhost:9092'
+KAFKA_TOPIC = 'feedback-handler-queue'
+
 
 # --- Producer Configuration ---
 conf = {'bootstrap.servers': KAFKA_BROKER}
@@ -25,7 +28,7 @@ def delivery_report(err, msg):
         print(f"Message delivered to topic '{msg.topic().encode('utf-8')}'"
               f" [{msg.partition()}] at offset {msg.offset()}")
 
-load_dotenv()
+
 
 # Database connection pool - a central object to manage connections.
 db_pool = None
@@ -57,9 +60,9 @@ app = FastAPI(title="AD Server and Feedback Handler",lifespan=lifespan)
 
 
 class Action(BaseModel):
-    View:int
-    Click:int
-    Acquisition:int
+    view:int
+    click:int
+    acquisition:int
 
 
 
@@ -225,9 +228,9 @@ async def serve_ads(user_id:str, device_type: str, city: str, state:str):
 async def ad_feedback(ad_request_id: str,action: Action):
     
     user_feedback_time = datetime.now().replace(microsecond=0)
-    click = action.Click
-    view = action.View
-    acquisition = action.Acquisition
+    click = action.click
+    view = action.view
+    acquisition = action.acquisition
 
     served_ad = await get_served_ad_async(ad_request_id)
     
@@ -235,13 +238,13 @@ async def ad_feedback(ad_request_id: str,action: Action):
     if not served_ad:
         raise HTTPException(status_code=404, detail="Ad not found.")
     
-    if action.Acquisition ==1:
+    if action.acquisition ==1:
         served_ad['expenditure_amount'] = float(served_ad['auction_cpa'])
         served_ad['user_action'] = 'acquisition'
-    elif action.Click ==1:
+    elif action.click ==1:
         served_ad['expenditure_amount'] = float(served_ad['auction_cpc'])
         served_ad['user_action'] = 'click'
-    elif action.View ==1:
+    elif action.view ==1:
         served_ad['expenditure_amount'] = 0
         served_ad['user_action'] = 'view'
     else:
