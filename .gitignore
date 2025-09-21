@@ -2,3 +2,4 @@ myenv/
 users_500k.csv
 Project Journal.md
 .env
+Collecting_data_from_kafka_topic.py

@@ -26,11 +26,8 @@ try:
 except (Exception,psycopg2.DatabaseError) as error:
     print(error)
 
-kafka_host = os.getenv("KAFKA_ADS_SOURCE_HOST")
-kafka_topic = os.getenv("KAFKA_ADS_SOURCE_TOPIC")
-
-client = KafkaClient(hosts="18.211.252.152:9092")
-topic = client.topics["de-capstone1"]
+client = KafkaClient(hosts="localhost:9092")
+topic = client.topics["de-project-ads-topic"]
 
 consumer =  topic.get_simple_consumer(
     consumer_group=b'ad-manager',

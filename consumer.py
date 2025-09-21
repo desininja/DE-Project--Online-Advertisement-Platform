@@ -3,14 +3,14 @@ import json
 import sys
 
 # --- Configuration ---
-KAFKA_BROKER = "localhost:9092"
-KAFKA_TOPIC = "test-for-online-ads"
+KAFKA_BROKER = "18.211.252.152:9092"
+KAFKA_TOPIC = "de-capstone1"
 
 # --- Consumer Configuration ---
 conf = {
     'bootstrap.servers': KAFKA_BROKER,
     'group.id': 'my_test_consumer_group',
-    'auto.offset.reset': 'earliest' # Start consuming from the beginning
+    'auto.offset.reset': 'latest' # Start consuming from the beginning
 }
 
 consumer = Consumer(conf)
@@ -39,6 +39,7 @@ def consume_messages():
                 # Message received successfully
                 print("\n--- Message Received ---")
                 message_value = msg.value().decode('utf-8')
+                print(message_value)
                 try:
                     data = json.loads(message_value)
                     print(json.dumps(data, indent=2))
