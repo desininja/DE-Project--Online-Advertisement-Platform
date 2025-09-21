@@ -1,5 +1,46 @@
-myenv/
-users_500k.csv
-Project Journal.md
+# myenv/
+# users_500k.csv
+# Project Journal.md
+# .env
+# Collecting_data_from_kafka_topic.py
+# Original Project Scripts/
+
+# Environment variables
 .env
+
+# Python virtual environments
+myenv/
+venv/
+.venv/
+env/
+.env/
+
+# Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Large data files (should be downloaded separately)
+users_500k.csv
+kafka_ads_output.csv
+
+# IDE and editor configuration
+.idea/
+.vscode/
+*.swp
+
+# macOS and Windows system files
+.DS_Store
+Thumbs.db
+
+# Spark/Application output
+checkpointLocation/
+logs_feedback_handler/
+*.log
+
+# Personal or temporary files
+Project Journal.md
 Collecting_data_from_kafka_topic.py
+Original Project Scripts/
+
