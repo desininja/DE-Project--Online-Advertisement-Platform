@@ -7,6 +7,7 @@ This project outlines the architecture and implementation of a data-intensive on
 ## ETL Architecture
 
 The diagram below illustrates the architecture for our Ads Campaign ETL (Extract, Transform, Load) pipeline.
+![ETL Architecture Diagram](Ads_Campaign_ETL_Architecture.jpg)
 
 -----
 
