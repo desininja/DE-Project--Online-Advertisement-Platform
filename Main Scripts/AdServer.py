@@ -202,9 +202,6 @@ async def write_served_ad_async(served_ad):
         print(f"Error writing to served_ads table: {e}")
         # Note: asyncpg manages transactions implicitly for simple execute calls.
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World!!"}
 
 @app.get("/ad/user/{user_id}/serve")
 async def serve_ads(user_id:str, device_type: str, city: str, state:str):
