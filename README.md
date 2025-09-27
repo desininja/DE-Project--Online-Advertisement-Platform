@@ -43,7 +43,8 @@ This project utilizes three public datasets for simulation and analysis:
 
   * **Amazon Advertisements**: Data related to Amazon's advertisements from 2019. https://www.kaggle.com/sachsene/amazons-advertisements 
   * **ADS 16 dataset**: Used to determine user preferences for advertisements. https://www.kaggle.com/groffo/ads16-dataset 
-  * **Advertising dataset**: Contains user demographics and internet usage patterns. https://www.kaggle.com/tbyrnes/advertising 
+  * **Advertising dataset**: Contains user demographics and internet usage patterns. https://www.kaggle.com/tbyrnes/advertising
+  * **Users dataset**: Contains users data, that is needed to store in Database[Postgres]. https://www.kaggle.com/datasets/junglisher/ad-users-dataset
 
 -----
 
