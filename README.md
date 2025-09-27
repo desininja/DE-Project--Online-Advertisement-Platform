@@ -1,63 +1,64 @@
-# DE Project: Online Advertisement Platform
+-----
 
-This project outlines the architecture and implementation of a data-intensive online advertising platform. It is designed to handle advertising campaigns, serve ads to users, track user feedback, and generate reports. The system simulates the entire lifecycle of an ad campaign, from creation and management to serving ads, running auctions, and handling user feedback for analytics. It is built using a microservices-oriented architecture with modern data engineering tools to create a robust and scalable pipeline.
+# 🚀 DE Project: Real-Time Online Advertising Platform
+
+## The Challenge: End-to-End Real-Time Advertising
+
+**"The rapid, dynamic nature of digital advertising demands a robust platform capable of real-time campaign management, instantaneous ad auctions, and reliable financial reconciliation."**
+
+Existing or simple advertising solutions often struggle to simultaneously manage **campaign lifecycle control**, execute **real-time bidding (RTB) auctions** under a specific model (e.g., second-price), and maintain **accurate, low-latency financial ledgers** for campaign budgets. This project was built to solve this by creating a **scalable, event-driven system**—complete with separate interfaces for campaign managers and clients—to ensure campaigns are run, ads are served, and billing/budget updates occur with minimal delay and maximum accuracy.
 
 -----
 
-## ETL Architecture
+## 💡 Project Overview
 
-The diagram below illustrates the architecture for our Ads Campaign ETL (Extract, Transform, Load) pipeline.
+This project outlines the architecture and implementation of a data-intensive online advertising platform. It simulates the entire lifecycle of an ad campaign, from **creation and management** to **serving ads** (via auction), **tracking user feedback**, and **generating reports**. The system uses a microservices-oriented architecture with modern data engineering tools to create a robust and scalable pipeline.
+
+-----
+
+## 🛠️ Technology Stack
+
+| Component | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Backend/API** | **Python**, **FastAPI**| Core application logic and Ad Server/Feedback API. |
+| **Messaging** | **Apache Kafka** | Event-driven pipeline for campaign instructions and user feedback. |
+| **State Store** | **PostgreSQL**, MySQL | Low-latency storage for active Ad Campaigns and User Profiles. |
+| **Data Processing** | **Apache Spark (PySpark)** | Stream processing of user feedback for archival and reporting. |
+| **Data Warehouse** | **PostgreSQL** | Storage layer for batch analytics and report generation (Future work). |
+| **Deployment** | **Docker**, Docker Compose, Crontab | Containerization and scheduling of services. |
+| **Libraries** | `confluent-kafka`, `asyncpg`, `pydantic` | Core integration libraries. |
+
+-----
+
+## ⚙️ Architecture & Data Flow
+
+The platform follows a distributed, **event-driven architecture** that mimics a real-world ad exchange.
+
+The diagram below illustrates the data flow and ETL (Extract, Transform, Load) pipeline:
 ![ETL Architecture Diagram](Ads_Campaign_ETL_Architecture.jpg)
 
------
+### Key Components
 
-## Architecture Overview
-
-The platform follows a distributed, event-driven architecture, mirroring a real-world advertising system.
-
-  * **Ad Data Producer**: A Python script `kafka_ads_data_producer.py` that reads ad campaign data from a CSV `kafka_ads_output.csv` and publishes it to a Kafka topic, simulating the campaign management interface.
-  * **Ad Manager**: A Python service `AdManager.py` that consumes campaign instructions from a Kafka queue, enriches the data (e.g., calculates CPM and determines status), and stores the details in a PostgreSQL or MySQL database.
-  * **Ad Server**: A FastAPI-based application `AdServer.py` that serves ads to users. It queries the database for eligible ads based on user targeting information, conducts a second-price auction, and logs the served ad event.
-  * **Feedback Handler**: An API endpoint within the `Ad Server` that receives user interaction data (views, clicks, acquisitions), calculates campaign expenditure, updates the budget in the database, and publishes an enriched feedback message to a separate Kafka topic.
-  * **User Feedback Writer**: A PySpark streaming job that consumes enriched user feedback from Kafka and writes it to a file system, ready for batch analysis, reporting, and archiving.
-  * **Slot Budget Manager**: A Python script that runs as a cron job to uniformly distribute the leftover ad campaign budget across the remaining time slots.
-  * **User Simulator**: A Python script that mimics user interactions by making requests to the Ad Server and sending back feedback.
+  * **Ad Data Producer (`kafka_ads_data_producer.py`)**: A simulation script that reads campaign data from a CSV and publishes campaign instructions to the **Ad Campaign Kafka Queue**.
+  * **Ad Manager (`AdManager.py`)**: A consumer service that processes campaign instructions, enriches the data (e.g., calculates CPM), and persists the campaign details in the **PostgreSQL/MySQL database**.
+  * **Ad Server (`AdServer.py`)**: A **FastAPI** application responsible for real-time ad delivery. It queries the database for eligible ads, conducts a **second-price auction** for the winning ad, and logs the served ad event.
+  * **Feedback Handler (API)**: An endpoint within the `AdServer` that receives user interactions (views, clicks, acquisitions). It calculates and **updates the campaign budget** in the database *immediately* and publishes an enriched feedback event to the **User Feedback Kafka Queue**.
+  * **User Feedback Writer (`feedbackWriter.py`)**: A **PySpark streaming job** that reliably consumes enriched user feedback from Kafka and writes it to a file system for downstream batch analysis and archiving.
+  * **Slot Budget Manager (Cron)**: A scheduled Python script that manages **budget distribution** by uniformly dividing the leftover campaign budget across remaining time slots.
+  * **User Simulator (`user_simulator.py`)**: A script that mimics user interactions by making requests to the Ad Server and sending back feedback.
 
 -----
 
-## Technology Stack
-
-  * **Backend**: Python, FastAPI, Flask
-  * **Database**: PostgreSQL, MySQL
-  * **Messaging Queue**: Apache Kafka
-  * **Data Processing**: Apache Spark (PySpark)
-  * **Data Warehousing**: Apache Hive
-  * **Libraries**: `confluent-kafka`, `pykafka`, `asyncpg`, `psycopg2`, `pydantic`, `dotenv`
-  * **Other Tools**: Docker, Docker Compose, Crontab
-
------
-
-## Datasets
-
-This project utilizes three public datasets for simulation and analysis:
-
-  * **Amazon Advertisements**: Data related to Amazon's advertisements from 2019. https://www.kaggle.com/sachsene/amazons-advertisements 
-  * **ADS 16 dataset**: Used to determine user preferences for advertisements. https://www.kaggle.com/groffo/ads16-dataset 
-  * **Advertising dataset**: Contains user demographics and internet usage patterns. https://www.kaggle.com/tbyrnes/advertising
-  * **Users dataset**: Contains users data, that is needed to store in Database[Postgres]. https://www.kaggle.com/datasets/junglisher/ad-users-dataset
-
------
-
-## Data Schemas
+## 📊 Data Schemas
 
 ### Kafka Queues
 
-#### Ad Campaign Kafka Queue
+| Queue | Topic | Purpose |
+| :--- | :--- | :--- |
+| **Ad Campaign** | `de-project-ads-topic` | Campaign creation, update, and stop instructions. |
+| **User Feedback** | `feedback-handler-queue` | Enriched user interaction data for archiving and billing. |
 
-This queue is used for campaign instructions.
-
-*   **Topic**: `de-project-ads-topic`
-*   **Kafka Broker (Local)**: `localhost:9092`
+| Ad Campaign Queue Schema |
 
 | Column | Description |
 | :--- | :--- |
@@ -79,42 +80,17 @@ This queue is used for campaign instructions.
 | `Date Range` | Date range for the campaign |
 | `Time Range` | Time range for the campaign |
 
-*Sample data:*
 
-```json
+Ad Campaign Queue Schema Example
+```JSON
 {"text": "Transmission Oil Cooler Assembly for 2014-2017 Toyota Highlander LE, LE Plus, Limited, XLE | V6 3.5L | 32910-48190", "category": "Tools & Hardware", "keywords": "automotive,oils,fluids", "campaign_id": "8cf1b846-8f97-11f0-b7f6-0e087721c0e9", "action": "New Campaign", "target_gender": "F", "target_age_range": "{'start': '20', 'end': '45'}", "target_city": "All", "target_state": "All", "target_country": "India", "target_income_bucket": "M", "target_device": "All", "cpc": "0.00066", "cpa": "0.0529", "budget": "500", "date_range": "{'start': '2025-09-12', 'end': '2025-09-13'}", "time_range": "{'start': '5:00:00', 'end': '18:00:00'}"}
 ```
 
-#### User Feedback Kafka Queue
-
-  * **Topic**: `feedback-handler-queue`
-
-This queue stores enriched user feedback data for archiving and billing.
-
 ### Database Tables (PostgreSQL or MySQL)
 
-#### `users`
+#### `ads` (Campaign Configuration)
 
-| Column | Datatype | Description |
-| :--- | :--- | :--- |
-| `id` | `NVARCHAR` | User Identifier |
-| `age` | `INT` | Age of the user |
-| `gender` | `NVARCHAR` | Gender of the user |
-| `internet_usage` | `NVARCHAR` | Daily average internet usage |
-| `income_bucket` | `NVARCHAR` | Estimated income bucket (`H`, `M`, `L`) |
-| `user_agent_string` | `NVARCHAR` | User-agent string |
-| `device_type` | `NVARCHAR` | Type of device used |
-| `websites` | `NVARCHAR` | Websites liked by the user |
-| `movies` | `NVARCHAR` | Movies liked by the user |
-| `music` | `NVARCHAR` | Music liked by the user |
-| `program` | `NVARCHAR` | Programs liked by the user |
-| `books` | `NVARCHAR` | Books liked by the user |
-| `negatives` | `NVARCHAR` | Keywords representing dislikes |
-| `positives` | `NVARCHAR` | Keywords representing likes |
-
-#### `ads`
-
-This table stores ad campaign data from the Kafka queue with additional derived attributes.
+Stores campaign data and derived attributes, including the live **`budget`** and **`current_slot_budget`** for real-time auction eligibility checks.
 
 | Column | Datatype | Description |
 | :--- | :--- | :--- |
@@ -141,9 +117,28 @@ This table stores ad campaign data from the Kafka queue with additional derived 
 | `time_range_start` | `NVARCHAR` | Campaign start time |
 | `time_range_end` | `NVARCHAR` | Campaign end time |
 
-#### `served_ads`
+#### `users` (User Profiles)
 
-This table stores a record of every ad served to a user.
+| Column | Datatype | Description |
+| :--- | :--- | :--- |
+| `id` | `NVARCHAR` | User Identifier |
+| `age` | `INT` | Age of the user |
+| `gender` | `NVARCHAR` | Gender of the user |
+| `internet_usage` | `NVARCHAR` | Daily average internet usage |
+| `income_bucket` | `NVARCHAR` | Estimated income bucket (`H`, `M`, `L`) |
+| `user_agent_string` | `NVARCHAR` | User-agent string |
+| `device_type` | `NVARCHAR` | Type of device used |
+| `websites` | `NVARCHAR` | Websites liked by the user |
+| `movies` | `NVARCHAR` | Movies liked by the user |
+| `music` | `NVARCHAR` | Music liked by the user |
+| `program` | `NVARCHAR` | Programs liked by the user |
+| `books` | `NVARCHAR` | Books liked by the user |
+| `negatives` | `NVARCHAR` | Keywords representing dislikes |
+| `positives` | `NVARCHAR` | Keywords representing likes |
+
+#### `served_ads` (Served Event Log)
+
+A record of every ad that won the auction and was displayed to a user.
 
 | Column | Datatype | Description |
 | :--- | :--- | :--- |
@@ -164,123 +159,130 @@ This table stores a record of every ad served to a user.
 
 -----
 
-## API Endpoints
+## 🔗 API Endpoints
 
-### Ad Server
+### 1\. Ad Server (Real-Time Auction)
 
-  * **URL**: `<host>/ad/user/<user_id>/serve?device_type=<device_type>&city=<city>&state=<state>`
-  * **Example**: `http://127.0.0.1:8000/ad/user/123/serve?device_type=All&city=Mumbai&state=Maharashtra`
-  * **HTTP Method**: `GET`
-  * **Functionality**: Serves an ad to a user based on their details.
+| Endpoint | Method | Functionality |
+| :--- | :--- | :--- |
+| **`/ad/user/<user_id>/serve`** | `GET` | Initiates the ad auction process and returns the winning ad. |
+| **Example** | | `http://127.0.0.1:8000/ad/user/123/serve?device_type=All&city=Mumbai&state=Maharashtra` |
 
-### Feedback Handler
+### 2\. Feedback Handler (Billing & Event Publishing)
 
-  * **URL**: `<host>/ad/<ad_request_id>/feedback`
-  * **Example**: `http://localhost:8080/ad/17001d26-0f72-11eb-8a4e-acde48001122/feedback`
-  * **HTTP Method**: `POST`
-  * **Functionality**: Receives user feedback (view, click, acquisition) for a specific ad request.
+| Endpoint | Method | Functionality |
+| :--- | :--- | :--- |
+| **`/ad/<ad_request_id>/feedback`** | `POST` | Receives user interaction (view, click, acquisition), deducts budget, and publishes the event. |
+| **Example** | | `http://localhost:8080/ad/17001d26-0f72-11eb-8a4e-acde48001122/feedback` |
 
 -----
 
-## Setup & Installation
+## 📚 Datasets
 
-### Prerequisites:
+The project uses four public datasets to simulate diverse user profiles and a rich set of ad campaigns:
 
-  * Python 3.12+
-  * Docker and Docker Compose
-  * An Apache Spark installation (for `feedbackWriter.py`)
-  * PostgreSQL or MySQL
+1. **Amazon Advertisements**: Data related to Amazon's advertisements from 2019. https://www.kaggle.com/sachsene/amazons-advertisements 
+2. **ADS 16 dataset**: Used to determine user preferences for advertisements. https://www.kaggle.com/groffo/ads16-dataset 
+3. **Advertising dataset**: Contains user demographics and internet usage patterns. https://www.kaggle.com/tbyrnes/advertising
+4. **Users dataset**: Contains users data, that is needed to store in Database[Postgres]. https://www.kaggle.com/datasets/junglisher/ad-users-dataset
 
-### 1\. Clone the Repository:
+-----
+
+## 💻 Setup & Installation
+
+### Prerequisites
+
+  * **Python 3.12+**
+  * **Docker** and **Docker Compose**
+  * **Apache Spark** installation (for `feedbackWriter.py`)
+  * **PostgreSQL** or MySQL
+
+### 1\. Clone & Dependencies
 
 ```bash
 git clone https://github.com/your-username/DE-Project--Online-Advertisement-Platform.git
 cd DE-Project--Online-Advertisement-Platform
+
+# Install dependencies
+python3 -m venv myenv && source myenv/bin/activate
+pip install -r requirements.txt
 ```
 
-### 2\. Database Setup:
+### 2\. Infrastructure (Kafka/DB)
 
-  * Start PostgreSQL: `brew services start postgresql`
-  * Use `pgadmin4` or a similar tool to create a new schema `online_ads` and the `users`, `ads`, and `served_ads` tables with the provided schemas. The local password is `postgres`.
-  * For Queries see file `Sequel_Queries.sql`
-
-### 3\. Environment Variables:
-
-  * Create a `.env` file in the root directory by copying the example: `cp .env.example .env`
-  * Fill in the `.env` file with your database credentials, Kafka broker addresses, and other configuration details.
-
-### 4\. Install Dependencies:
-
-  * Create and activate a virtual environment: `python3 -m venv myenv` then `source myenv/bin/activate`
-  * Install dependencies: `pip install -r requirements.txt`
-
-### 5\. Start Infrastructure:
-
-  * It is recommended to run Kafka using Docker Compose. A `docker-compose.yml` file should be created for this.
-  * Start the Docker containers: `docker-compose up -d`
-  * Manually create the Kafka topics:
+  * **Database Setup**: Start your PostgreSQL/MySQL service and use `pgadmin4` (or similar) to create the `online_ads` schema and the **`users`**, **`ads`**, and **`served_ads`** tables (Schema details are above). *(See `Sequel_Queries.sql` for query examples.)*
+  * **Kafka Setup**:
     ```bash
-    # Topic for Ad Campaigns
-    docker exec broker kafka-topics.sh --create --topic de-project-ads-topic --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
+    # Assuming a docker-compose.yml file is present for Kafka
+    docker-compose up -d
 
-    # Topic for User Feedback
+    # Manually create the two required topics
+    docker exec broker kafka-topics.sh --create --topic de-project-ads-topic --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
     docker exec broker kafka-topics.sh --create --topic feedback-handler-queue --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
     ```
 
+### 3\. Configuration
+
+  * Create a `.env` file from the example: `cp .env.example .env`
+  * Fill in all database credentials, Kafka broker addresses, and service ports.
+
 -----
 
-## How to Run the Simulation
+## ▶️ Running the Simulation
 
-Execute the scripts in separate terminal windows in the following order. Let the system run for at least an hour to collect data.
+Execute the following steps in separate terminal windows to run the end-to-end simulation. It is recommended to let the system run for at least **one hour** to generate a substantial dataset.
 
-1.  **Start the Ad Server**: This will expose the API endpoints for serving ads and receiving feedback.
+1.  **Start the Ad Server (API)**
 
     ```bash
     uvicorn "Main Scripts.AdServer:app" --host 0.0.0.0 --port 8000
     ```
 
-2.  **Start the Consumers**:
+2.  **Start the Consumers**
 
-      * **Ad Manager**: This service waits for new campaign messages from Kafka.
-        ```bash
-        python "Main Scripts/AdManager.py"
-        ```
-      * **Feedback Writer**: This Spark job listens for user feedback events.
-        ```bash
-        # Example submission command, adjust for your Spark setup
-        spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.1 "Main Scripts/feedbackWriter.py"
-        ```
+    ```bash
+    # Terminal 2: Ad Manager (DB writer)
+    python "Main Scripts/AdManager.py"
 
-3.  **Start the Producers**:
+    # Terminal 3: User Feedback Writer (Spark Streaming)
+    # Adjust the Spark submit command for your environment
+    spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.1 "Main Scripts/feedbackWriter.py"
+    ```
 
-      * **Publish Ad Campaigns**: Run the producer to load campaign data into Kafka.
-        ```bash
-        python kafka_ads_data_producer.py
-        ```
-      * **Start the User Simulator**: This will begin generating requests to the Ad Server.
-        ```bash
-        python user_simulator.py <db_host> <db_user> <db_pass> <db_name> <protocol> <ad_server_host> <ad_server_port> <feedback_handler_host> <feedback_handler_port>
+3.  **Start the Producers/Simulators**
 
-        # Example:
-        python user_simulator.py localhost postgres mypassword postgres http localhost 8000 localhost 8000
-        ```
+    ```bash
+    # Terminal 4: Publish Ad Campaigns
+    python kafka_ads_data_producer.py
 
-4. **Data Analytics**:
-      * **Questions to Answer**: Write SQL queries to answer the below questions:
-      ```
-      Top 10 under-utilised Ad Campaign
-      Top 10 spending Ad Campaign
-      Total expenditure and CTR of the Ad Campaigns
-      Top 5 Interactive(based on the CTR)
-      Top 10 spending Ad Category
-      Top Auction price differences.
-      ```
+    # Terminal 5: User Simulator (Starts generating traffic)
+    # The script takes configuration parameters; ensure they match your setup.
+    python user_simulator.py <db_host> <db_user> <db_pass> <db_name> <protocol> <ad_server_host> <ad_server_port> <feedback_handler_host> <feedback_handler_port>
+    # Example:
+    # python user_simulator.py localhost postgres mypassword postgres http localhost 8000 localhost 8000
+    ```
 
 -----
 
-## Project Scope & Future Work
+## 📈 Data Analytics & Reporting
 
-This project covers the core functionality of an ad platform. The original project scope also includes several other components that could be implemented as future work:
+After the simulation is complete, the data in your database (`ads`, `served_ads`) and the archived files (from Spark) can be queried for business insights.
 
-  * **Reporting Dashboard**: Build analytics reports and visualizations on top of the archived data in Hive using a tool like Apache Hue or Superset to derive business insights (e.g., top-spending campaigns, user CTR by demographic).
-  * **Containerize All Services**: Create Dockerfiles for each Python application to make the entire stack fully containerized and easier to deploy.
+### Key Analytical Questions
+
+  * Top 10 under-utilised Ad Campaigns
+  * Top 10 spending Ad Campaigns
+  * Total expenditure and Click-Through Rate (**CTR**) of all campaigns
+  * Top 5 campaigns based on Interactivity (highest CTR)
+  * Top 10 spending Ad Categories
+  * Analysis of Auction price differences (e.g., winner's bid vs. second-highest bid)
+
+-----
+
+## 🔭 Project Scope & Future Work
+
+While the core functional requirements have been met, the following components are natural extensions for further development:
+
+  * **Reporting Dashboard**: Build analytics reports and visualizations on top of the archived data (e.g., in a Hive layer) using a BI tool like Apache Hue or Superset to derive business insights.
+  * **Full Containerization**: Create Dockerfiles for *every* application service (Ad Manager, Ad Server, Producers) to make the entire stack fully portable and easier to deploy in cloud environments.
+  * **Advanced Bidding Model**: Implement more sophisticated bidding strategies or an explicit **bid floor** logic in the Ad Server.
