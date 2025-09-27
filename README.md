@@ -176,7 +176,7 @@ This table stores a record of every ad served to a user.
 ### Feedback Handler
 
   * **URL**: `<host>/ad/<ad_request_id>/feedback`
-  * **Example**: `http://127.0.0.1:8000/docs#/default/ad_feedback_ad__ad_request_id__feedback_post`
+  * **Example**: `http://localhost:8080/ad/17001d26-0f72-11eb-8a4e-acde48001122/feedback`
   * **HTTP Method**: `POST`
   * **Functionality**: Receives user feedback (view, click, acquisition) for a specific ad request.
 
